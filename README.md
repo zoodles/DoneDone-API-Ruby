@@ -16,16 +16,21 @@ The examples below work for projects with the API enabled.
 ```
 
 # use it in your own code:
-require 'issue_tracker.rb'
+cmd-prompt> gem install 'donedone'
+require 'donedone'
 
-# or interact via irb
-cmd-prompt> irb -r "./issue_tracker.rb"
+# or interact via donedone ruby-cmd
+cmd-prompt> donedone -h
+
+# or via irb
+cmd-prompt> irb
+require 'donedone'
 
 domain = "YOUR_COMPANY_DOMAIN" #e.g. wearemammoth
 username = "YOUR_USERNAME"
 password = "YOUR_PASSWORD"
 
-issueTracker = IssueTracker.new(domain, username, password)
+issueTracker = DoneDone::IssueTracker.new(domain, username, password)
 
 
 results = issueTracker.projects
@@ -64,6 +69,4 @@ issue_url = issueTracker.update_issue(project_id, new_issue_id, title=nil, prior
 ```
 
 ## TODO
-Package this as a GEM
-move issue_tracker.rb & multipart.rb to lib
-move IssueTracker into the DoneDone namespace
+make the api more ruby-like (use hashes for args)

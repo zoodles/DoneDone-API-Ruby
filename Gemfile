@@ -1,3 +1,4 @@
-source 'http://rubygems.org'
+source "http://rubygems.org"
 
-gem 'mime-types'
+# Specify your gem's dependencies in donedone.gemspec
+gemspec
