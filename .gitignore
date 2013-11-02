@@ -3,6 +3,7 @@
 .bundle
 .config
 .rvmrc
+.ignore
 .yardoc
 Gemfile.lock
 _yardoc
