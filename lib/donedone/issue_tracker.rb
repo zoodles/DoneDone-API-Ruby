@@ -1,32 +1,39 @@
-require 'net/https'
-require "uri"
+require_relative "http"
+require_relative "constant"
 require "json"
-require_relative 'multipart.rb'
-
 
 module DoneDone
   class IssueTracker
+    HELPER_METHODS = [:response, :result]
+    def self.api_methods
+      instance_methods(false) - HELPER_METHODS
+    end
+
     #Provide access to the DoneDone IssueTracker API.
     #See http://www.getdonedone.com/api for complete documentation for the
     #API.
 
-    attr_reader :_debug
-    attr_reader :base_url
     attr_reader :response
+    attr_reader :_debug
     private :_debug
-    private :base_url
+    attr_reader :_http_helper
+    private :_http_helper
+    attr_reader :_domain
+    private :_domain
 
     #_debug - print debug messages
     #domain - company's DoneDone domain
     #username - DoneDone username
     #password - DoneDone password
 
-    def initialize(domain, username, password=nil, debug=false)
-      @base_url = "https://#{domain}.mydonedone.com/IssueTracker/API/"
-      @response = nil
-      @_debug = debug
+    def initialize(domain, username, password=nil, options = {})
+      @_domain = domain
       @_username = username
       @_password = password #not good to pass this around!
+
+      @_debug = options.has_key?(:debug) ? options[:debug] : false
+      @_http_helper = options[:http_helper] || DoneDone::Http.new
+      @response = nil
     end
 
     def result
@@ -38,32 +45,32 @@ module DoneDone
     # load_with_issues - Passing true will deep load all of the projects as
     # well as all of their active issues.
     def projects(load_with_issues=false)
-      url = load_with_issues ? 'Projects/true' : 'Projects'
+      url = load_with_issues ? Constant.url_for('PROJECTS_WITH_ISSUES') : Constant.url_for('PROJECTS')
       api url
     end
 
     # Get priority levels
     def priority_levels
-      api 'PriorityLevels'
+      api Constant.url_for('PRIORITY_LEVELS')
     end
 
     # Get all people in a project
     # project_id - project id
-    def all_people_in_project project_id
-      api "PeopleInProject/#{project_id}"
+    def people_in_project project_id
+      api Constant.url_for('PEOPLE_IN_PROJECT', project_id)
     end
 
     # Get all issues in a project
     # project_id - project id
-    def all_issues_in_project project_id
-      api "IssuesInProject/#{project_id}"
+    def issues_in_project project_id
+      api Constant.url_for('ISSUES_IN_PROJECT', project_id)
     end
 
     # Check if an issue exists
     # project_id - project id
     # issue_id - issue id
     def issue_exist?(project_id, issue_id)
-      api("DoesIssueExist/#{project_id}/#{issue_id}")
+      api Constant.url_for('DOES_ISSUE_EXIST', project_id, issue_id)
       !result.empty? ? result["IssueExists"] : false
     end
 
@@ -73,18 +80,18 @@ module DoneDone
     # project_id - project id
     # issue_id - issue id
     def potential_statuses_for_issue( project_id, issue_id)
-      api "PotentialStatusesForIssue/#{project_id}/#{issue_id}"
+      api Constant.url_for('POTENTIAL_STATUSES_FOR_ISSUE', project_id, issue_id)
     end
 
     # Note: You can use this to check if an issue exists as well,
     # since it will return a 404 if the issue does not exist.
-    def issue_details(project_id, issue_id)
-      api "Issue/#{project_id}/#{issue_id}"
+    def issue(project_id, issue_id)
+      api Constant.url_for('ISSUE', project_id, issue_id)
     end
 
     # Get a list of people that cane be assigend to an issue
     def people_for_issue_assignment(project_id, issue_id)
-      api "PeopleForIssueAssignment/#{project_id}/#{issue_id}"
+      api Constant.url_for('PEOPLE_FOR_ISSUE_ASSIGNMENT', project_id, issue_id)
     end
 
     #Create Issue
@@ -98,7 +105,12 @@ module DoneDone
     # tags - a string of tags delimited by comma
     # watcher_id - a string of people's id delimited by comma
     # attachments - list of file paths
-    def create_issue( project_id, title, priority_id, resolver_id, tester_id, description=nil, tags=nil, watcher_id=nil, attachments=nil)
+    def create_issue( project_id, title, priority_id, resolver_id, tester_id, options={})
+      description=options[:description]
+      tags=options[:tags]
+      watcher_id=options[:watcher_id]
+      attachments=options[:attachments]
+
       data = {
         'title' => title,
         'priority_level_id' => priority_id,
@@ -110,7 +122,9 @@ module DoneDone
       data['tags'] = tags if tags
       data['watcher_ids'] = watcher_id if watcher_id
 
-      api( "Issue/#{project_id}", data, attachments, false, true)
+      params = {:data => data, :update => false, :post => true}
+      params[:attachments] = attachments if attachments
+      api Constant.url_for('CREATE_ISSUE', project_id), params
       !result.empty? ? result["IssueID"] : nil
     end
 
@@ -121,10 +135,16 @@ module DoneDone
     #people_to_cc_ids - a string of people to be CCed on this comment,
     #delimited by comma
     #attachments - list of absolute file path.
-    def create_comment(project_id, order_number, comment, people_to_cc_ids=nil, attachments=nil)
+    def create_comment(project_id, order_number, comment, options={})
+      people_to_cc_ids=options[:people_to_cc_ids]
+      attachments=options[:attachments]
+
       data = {'comment' => comment}
       data['people_to_cc_ids']= people_to_cc_ids if people_to_cc_ids
-      api( "Comment/#{project_id}/#{order_number}", data, attachments, false, true)
+
+      params = {:data => data, :update => false, :post => true}
+      params[:attachments] = attachments if attachments
+      api Constant.url_for('COMMENT', project_id, order_number), params
       !result.empty? ? result["CommentURL"] : nil
     end
 
@@ -149,7 +169,16 @@ module DoneDone
     # tags - a string of tags delimited by comma
     # state_id - a valid state that this issue can transition to
     # attachments - list of file paths
-    def update_issue(project_id, order_number, title=nil, priority_id=nil, resolver_id=nil, tester_id=nil, description=nil, tags=nil, state_id=nil, attachments=nil)
+    def update_issue(project_id, order_number, options={})
+      title=options[:title]
+      priority_id=options[:priority_id]
+      resolver_id=options[:resolver_id]
+      tester_id=options[:tester_id]
+      description=options[:description]
+      tags=options[:tags]
+      state_id=options[:state_id]
+      attachments=options[:attachments]
+
       data = {}
       data['title'] = title if title
       data['priority_level_id'] = priority_id if priority_id
@@ -160,7 +189,10 @@ module DoneDone
       data['tags'] = tags if tags
       data['state_id'] = state_id if state_id
 
-      api("Issue/#{project_id}/#{order_number}", data, attachments, true)
+      params = {:update => true}
+      params[:data] = data unless data.empty?
+      params[:attachments] = attachments if attachments
+      api Constant.url_for('ISSUE', project_id, order_number), params
       !result.empty? ? result["IssueURL"] : nil
     end
 
@@ -173,9 +205,13 @@ module DoneDone
     # data - optional POST form data
     # attachemnts - optional list of file paths
     # update - flag to indicate if this is a PUT operation
-    def api(method_url, data=nil, attachments=nil, update=false, post=false)
+    def api(method_url, options={})
+      data = options[:data]
+      attachments = options[:attachments]
+      update = options.has_key?(:update) ? options[:update] : false
+      post = options.has_key?(:post) ? options[:post] : false
+
       @response = nil
-      uri = URI.parse(@base_url + method_url)
       files = []
       request_method = nil
 
@@ -199,63 +235,16 @@ module DoneDone
         request_method = :post
       end
 
-      @response = http(request_method, uri, data, files)
+      params = { :debug => _debug }
+      params[:data] = data if data
+      params[:files] = files if files && !files.empty?
+      _http_helper.set(_domain, @_username, @_password, method_url, params)
+      @response = _http_helper.send(request_method)
       return result
     rescue Exception => e
       warn e.message
       warn e.backtrace.inspect
       return ""
-    end
-
-    def http(request_method, uri, data, files)
-      puts "request_method: #{request_method}, uri: #{uri.inspect}, files: #{files.inspect}" if _debug
-
-      puts "http - host: #{uri.host}, - port: #{uri.port}" if _debug
-      @_http = Net::HTTP.new(uri.host, uri.port)
-      @_http.use_ssl = true
-      @_http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      @_http.ssl_version = :SSLv3
-
-      case request_method
-      when :post
-        puts "post, #{uri.request_uri.inspect}" if _debug
-        @_request = Net::HTTP::Post.new(uri.request_uri)
-
-        if files.empty?
-          puts "form_data, #{data.inspect}" if _debug
-          @_request.set_form_data(data) # this breaks it!
-        else
-          params = files.reduce({}){|m,h|m[h.keys.first] = h.values.first; m}
-          params.merge!(data)
-          body, _header = Multipart::Post.prepare_query(params)
-          puts "unused header: #{_header.inspect}"
-
-          puts "params: #{params.inspect}; body: #{body.inspect}"
-          @_request.content_type = Multipart::Post::CONTENT_TYPE
-          @_request.content_length = body.size
-          @_request["User-Agent"] = Multipart::Post::USERAGENT
-
-          @_request.body = body
-        end
-
-      when :put
-        puts "put, #{uri.request_uri.inspect}" if _debug
-        @_request = Net::HTTP::Put.new(uri.request_uri)
-        puts "form_data, #{data.inspect}" if _debug
-        @_request.set_form_data(data)
-
-      else # get
-        puts "get, #{uri.request_uri.inspect}" if _debug
-        @_request = Net::HTTP::Get.new(uri.request_uri)
-
-      end
-
-      @_request.basic_auth(@_username, @_password)
-
-
-      puts "request: #{@_request.to_hash.inspect}" if _debug
-
-      @_http.request(@_request)
     end
   end
 end

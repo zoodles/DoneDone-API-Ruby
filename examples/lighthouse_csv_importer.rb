@@ -12,19 +12,33 @@
 # bit different from DoneDone, this script will also create the project with assignee
 # as both resolver and tester.
 
-require 'donedone'
+begin
+  require 'rubygems'
+  gem 'donedone'
+rescue LoadError
+end
+
+begin
+  require 'donedone'
+rescue LoadError
+  require_relative '../lib/donedone'
+end
+
 require 'csv'
 
 domain = ARGV.shift || "Your company domain"
 username = ARGV.shift || "Your donedone username"
 password = ARGV.shift || "Your donedone password"
-project_id = ARGV.shift || "Your donedone project ID"
+project_id = ARGV.shift.to_i || "Your donedone project ID"
 
 CSVFilePath = ARGV.shift || "Path to the CSV file exported from lighthouseapp.com"
 priority_id = ARGV.shift || 2 #Assuming medium priority
 
+# puts "domain: #{domain.inspect}, username: #{username.inspect}, password: #{password.inspect}, project_id: #{project_id.inspect}, csv: #{CSVFilePath.inspect}"
+fail( "unknown file: #{CSVFilePath.inspect}") unless File.exists?(CSVFilePath)
+
 issue_tracker = DoneDone::IssueTracker.new(domain, username, password)
-project_peoples = issue_tracker.all_people_in_project(project_id)
+project_peoples = issue_tracker.people_in_project(project_id)
 
 
 # read file
@@ -34,8 +48,11 @@ csv = CSV.parse(csv_text, { :headers => true, :return_headers => false, :col_sep
 
 # loop over issues
 csv.each do |issue|
+  # puts "i: #{issue.inspect}"
   person_id = nil
   name = issue['assigned']
+  next if "" == project_peoples
+  # puts "pp: #{project_peoples.inspect}"
   if person = project_peoples.detect{|people| people["Value"] == name}
     person_id = person["ID"]
   else
@@ -46,7 +63,7 @@ csv.each do |issue|
   print issue_tracker.create_issue(
     project_id, issue['title'], priority_id,
     person_id, person_id,
-    "Created by DoneDone API Ruby client.", issue['tags'])
+    {:description => "Created by DoneDone API Ruby client.", :tags => issue['tags']})
 
   # Pause execution for API request wait time.
   sleep(5)

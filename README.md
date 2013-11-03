@@ -42,34 +42,32 @@ project_id = issue_tracker.result.first["ID"]
 
 issue_tracker.priority_levels
 
-issue_tracker.all_people_in_project(project_id)
+issue_tracker.people_in_project(project_id)
   tester_id = issue_tracker.result.first["ID"]
   resolver_id = issue_tracker.result.last["ID"]
 
-issue_tracker.all_issues_in_project(project_id)
+issue_tracker.issues_in_project(project_id)
   priority_level_id = issue_tracker.result.first["PriorityLevelID"]
   issue_id = issue_tracker.result.first["OrderNumber"]
 
 issue_tracker.issue_exist?(project_id, issue_id)
 issue_tracker.potential_statuses_for_issue(project_id, issue_id)
-issue_tracker.issue_details(project_id, issue_id)
+issue_tracker.issue(project_id, issue_id)
 issue_tracker.people_for_issue_assignment(project_id, issue_id)
 
 new_issue_id = issue_tracker.create_issue(project_id, title, priority_id,
-resolver_id, tester_id, description='', tags=nil, watcher_id=nil, attachments=nil)
+resolver_id, tester_id, {:description => '', :tags=> nil, :watcher_id=>nil, :attachments=>nil})
 
 comment = "blah blah"
 file_name = "./file1.txt"
 File.open(file_name, "w") {|f| f.puts "attachment one." }
-comment_url = issue_tracker.create_comment(project_id, new_issue_id, comment, people_to_cc_ids=nil attachments=[file_name])
+comment_url = issue_tracker.create_comment(project_id, new_issue_id, comment, {:people_to_cc_ids=>nil :attachments=>[file_name]})
 puts issue_tracker.result["SuccesfullyAttachedFiles"] ? "attachment uploaded successfully" : "failed to upload attachment"
 File.unlink(file_name)
 
-issue_url = issue_tracker.update_issue(project_id, new_issue_id, title=nil, priority_id=nil, resolver_id=nil, tester_id=nil, description=nil, tags=nil, state_id=nil, attachments=nil)
+issue_url = issue_tracker.update_issue(project_id, new_issue_id, {:title=>nil, :priority_id=>nil, :resolver_id=>nil, :tester_id=nil, :description=>nil, :tags=>nil, :state_id=>nil, :attachments=>nil})
 
 ```
 
 ## TODO
-automate the (manual) "tests" in this README via rspec
-
-make the api calls more ruby-like (i.e. use hashes for optional args)
+improve design via specs

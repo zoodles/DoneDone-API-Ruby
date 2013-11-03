@@ -6,7 +6,11 @@ begin
 rescue LoadError
 end
 
-require 'donedone'
+begin
+  require 'donedone'
+rescue LoadError
+  require_relative '../lib/donedone'
+end
 
 if ([] == ARGV) || ARGV.length < 4 || (ARGV[0].start_with?("-h"))
   warn "USAGE: ${$0} <domain> <usr> <pwd> <api-method> [args...]"
@@ -16,6 +20,6 @@ init_args = []
 # puts "ARGV start: #{ARGV.inspect}"
 3.times { init_args << ARGV.shift }
 # puts "ARGV now: #{ARGV.inspect}"
-issueTracker = DoneDone::IssueTracker.new(*init_args)
-puts issueTracker.send(ARGV.shift, *ARGV)
+issue_tracker = DoneDone::IssueTracker.new(*init_args)
+puts issue_tracker.send(ARGV.shift, *ARGV)
 exit

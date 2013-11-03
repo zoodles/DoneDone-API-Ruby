@@ -1,5 +1,5 @@
-require 'donedone/version'
-require 'donedone/multipart'
-require 'donedone/issue_tracker'
+require_relative './donedone/version'
+require_relative './donedone/multipart'
+require_relative './donedone/issue_tracker'
 module DoneDone
 end
