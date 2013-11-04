@@ -26,7 +26,8 @@ end
 
 require 'csv'
 
-domain = ARGV.shift || "Your company domain"
+DEFAULT_DOMAIN = "Your company domain"
+domain = ARGV.shift || DEFAULT_DOMAIN
 username = ARGV.shift || "Your donedone username"
 password = ARGV.shift || "Your donedone password"
 project_id = ARGV.shift.to_i || "Your donedone project ID"
@@ -36,6 +37,7 @@ priority_id = ARGV.shift || 2 #Assuming medium priority
 
 # puts "domain: #{domain.inspect}, username: #{username.inspect}, password: #{password.inspect}, project_id: #{project_id.inspect}, csv: #{CSVFilePath.inspect}"
 fail( "unknown file: #{CSVFilePath.inspect}") unless File.exists?(CSVFilePath)
+fail( "You must edit pass-in variables or edit the default values in #{$0}" ) if DEFAULT_DOMAIN == domain
 
 issue_tracker = DoneDone::IssueTracker.new(domain, username, password)
 project_peoples = issue_tracker.people_in_project(project_id)

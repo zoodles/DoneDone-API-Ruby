@@ -4,7 +4,7 @@ require "json"
 
 module DoneDone
   class IssueTracker
-    HELPER_METHODS = [:response, :result]
+    HELPER_METHODS = [:response, :result] unless const_defined?(:HELPER_METHODS)
     def self.api_methods
       instance_methods(false) - HELPER_METHODS
     end

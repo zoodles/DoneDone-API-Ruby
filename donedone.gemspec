@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   # specify any dependencies here; for example:
-  s.add_dependency "mime-types"
+  s.add_dependency "mime-types", "~> 2.0"
   s.add_development_dependency "rspec", "~> 2.14.0"
   #s.add_development_dependency "simplecov"
 end
