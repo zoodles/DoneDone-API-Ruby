@@ -11,7 +11,14 @@ module DoneDone
     ISSUE = "#{CREATE_ISSUE}/%s"
     PEOPLE_FOR_ISSUE_ASSIGNMENT = "PeopleForIssueAssignment/%s/%s"
     COMMENT = "Comment/%s/%s"
-    BASE_URL = "https://%s.mydonedone.com/IssueTracker/API/"
+
+    HOST = "%s.mydonedone.com"
+    PROTOCOL = "https"
+    BASE_URL_PATH = "IssueTracker/API"
+    BASE_URL = "#{PROTOCOL}://%s/#{BASE_URL_PATH}/"
+
+    SSL_VERIFY_MODE = OpenSSL::SSL::VERIFY_NONE
+    SSL_VERSION = :SSLv3
 
     def self.url_for(name, *args)
       format_str = const_get(name)

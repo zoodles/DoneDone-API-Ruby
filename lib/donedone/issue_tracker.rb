@@ -18,8 +18,6 @@ module DoneDone
     private :_debug
     attr_reader :_http_helper
     private :_http_helper
-    attr_reader :_domain
-    private :_domain
 
     #_debug - print debug messages
     #domain - company's DoneDone domain
@@ -27,12 +25,8 @@ module DoneDone
     #password - DoneDone password
 
     def initialize(domain, username, password=nil, options = {})
-      @_domain = domain
-      @_username = username
-      @_password = password #not good to pass this around!
-
       @_debug = options.has_key?(:debug) ? options[:debug] : false
-      @_http_helper = options[:http_helper] || DoneDone::Http.new
+      @_http_helper = options[:http_helper] || DoneDone::Http.new(domain, username, password)
       @response = nil
     end
 
@@ -212,39 +206,43 @@ module DoneDone
       post = options.has_key?(:post) ? options[:post] : false
 
       @response = nil
-      files = []
+      files = {}
       request_method = nil
 
       if attachments
-        puts "attachments" if _debug
+        debug { "attachments; using post" }
         request_method = :post
         attachments.each_with_index do |attachment, index|
-          files.push({"attachment-#{index}" => attachment})
+          files["attachment-#{index}"] = attachment
         end
       else
         request_method = :get
       end
 
       if update
-        puts "using put" if _debug
+        debug { "using put" }
         request_method = :put
       end
 
       if post
-        puts "using post" if _debug
+        debug { "using post" }
         request_method = :post
       end
 
       params = { :debug => _debug }
       params[:data] = data if data
-      params[:files] = files if files && !files.empty?
-      _http_helper.set(_domain, @_username, @_password, method_url, params)
-      @response = _http_helper.send(request_method)
+      params[:files] = files unless files.empty?
+
+      @response = _http_helper.send(request_method, method_url, params)
       return result
     rescue Exception => e
       warn e.message
       warn e.backtrace.inspect
       return ""
+    end
+
+    def debug
+      puts(yield) if _debug && block_given?
     end
   end
 end

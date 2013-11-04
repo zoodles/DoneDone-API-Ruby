@@ -17,7 +17,7 @@ module DoneDone
       USERAGENT = "Mozilla/5.0 (Macintosh; U; PPC Mac OS X; en-us) AppleWebKit/523.10.6 (KHTML, like Gecko) Version/3.0.4 Safari/523.10.6" unless const_defined?(:USERAGENT)
       BOUNDARY = '--JTMultiPart' + rand(1000000).to_s + 'ZZZZZ' unless const_defined?(:BOUNDARY)
       CONTENT_TYPE = "multipart/form-data; boundary=#{ BOUNDARY }" unless const_defined?(:CONTENT_TYPE)
-      HEADER = { "Content-Type" => CONTENT_TYPE, "User-Agent" => USERAGENT } unless const_defined?(:HEADER)
+      #HEADER = { "Content-Type" => CONTENT_TYPE, "User-Agent" => USERAGENT } unless const_defined?(:HEADER)
 
       def self.prepare_query(params)
         fp = []
@@ -34,7 +34,7 @@ module DoneDone
 
         # Assemble the request body using the special multipart format
         query = fp.collect {|p| "--" + BOUNDARY + "\r\n" + p.to_multipart }.join("")  + "--" + BOUNDARY + "--"
-        return query, HEADER
+        return query, CONTENT_TYPE, USERAGENT
       end
     end
 

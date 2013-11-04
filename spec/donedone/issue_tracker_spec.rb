@@ -52,38 +52,33 @@ describe DoneDone::IssueTracker do
 
   describe "api-requests" do
     it "requests all projects" do
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant::PROJECTS, http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant::PROJECTS, http_helper_options )
 
       issue_tracker.projects
     end
 
     it "requests all projects with their issues" do
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant::PROJECTS_WITH_ISSUES, http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant::PROJECTS_WITH_ISSUES, http_helper_options)
 
       issue_tracker.projects(true)
     end
 
     it "requests all priority_levels" do
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant::PRIORITY_LEVELS, http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant::PRIORITY_LEVELS, http_helper_options)
 
       issue_tracker.priority_levels
     end
 
     it "requests all people_in_project" do
       project_id = 1
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('PEOPLE_IN_PROJECT', project_id), http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant.url_for('PEOPLE_IN_PROJECT', project_id), http_helper_options)
 
       issue_tracker.people_in_project(project_id)
     end
 
     it "requests all issues_in_project" do
       project_id = 1
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('ISSUES_IN_PROJECT', project_id), http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant.url_for('ISSUES_IN_PROJECT', project_id), http_helper_options)
 
       issue_tracker.issues_in_project(project_id)
     end
@@ -91,8 +86,7 @@ describe DoneDone::IssueTracker do
     it "requests if an issue exists for a project" do
       project_id = 1
       issue_order_number = 1
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('DOES_ISSUE_EXIST', project_id, issue_order_number), http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant.url_for('DOES_ISSUE_EXIST', project_id, issue_order_number), http_helper_options)
 
       issue_tracker.issue_exist?(project_id, issue_order_number)
     end
@@ -100,8 +94,7 @@ describe DoneDone::IssueTracker do
     it "requests status for a project's issue" do
       project_id = 1
       issue_order_number = 1
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('POTENTIAL_STATUSES_FOR_ISSUE', project_id, issue_order_number), http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant.url_for('POTENTIAL_STATUSES_FOR_ISSUE', project_id, issue_order_number), http_helper_options)
 
       issue_tracker.potential_statuses_for_issue(project_id, issue_order_number)
     end
@@ -109,8 +102,7 @@ describe DoneDone::IssueTracker do
     it "requests a project's issue's details" do
       project_id = 1
       issue_order_number = 1
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('ISSUE', project_id, issue_order_number), http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant.url_for('ISSUE', project_id, issue_order_number), http_helper_options)
 
       issue_tracker.issue(project_id, issue_order_number)
     end
@@ -118,8 +110,7 @@ describe DoneDone::IssueTracker do
     it "requests people for issue assignment" do
       project_id = 1
       issue_order_number = 1
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('PEOPLE_FOR_ISSUE_ASSIGNMENT', project_id, issue_order_number), http_helper_options)
-      http_helper.should_receive(:get)
+      http_helper.should_receive(:get).with( DoneDone::Constant.url_for('PEOPLE_FOR_ISSUE_ASSIGNMENT', project_id, issue_order_number), http_helper_options)
 
       issue_tracker.people_for_issue_assignment(project_id, issue_order_number)
     end
@@ -139,12 +130,12 @@ describe DoneDone::IssueTracker do
       }
 
       options = http_helper_options.merge(:data => data)
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('CREATE_ISSUE', project_id), options)
-      http_helper.should_receive(:post)
+      http_helper.should_receive(:post).with( DoneDone::Constant.url_for('CREATE_ISSUE', project_id), options)
 
       issue_tracker.create_issue(project_id, title, priority_level_id, resolver_id, tester_id)
     end
 
+    # todo: test for passing file upload(s)
     it "requests to create a comment for a project's issue" do
       project_id = 1
       issue_order_number = 1
@@ -153,8 +144,7 @@ describe DoneDone::IssueTracker do
       data = { 'comment' => comment }
 
       options = http_helper_options.merge(:data => data)
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('COMMENT', project_id, issue_order_number), options)
-      http_helper.should_receive(:post)
+      http_helper.should_receive(:post).with( DoneDone::Constant.url_for('COMMENT', project_id, issue_order_number), options)
 
       issue_tracker.create_comment(project_id, issue_order_number, comment)
     end
@@ -164,8 +154,7 @@ describe DoneDone::IssueTracker do
       issue_order_number = 1
 
       options = http_helper_options
-      http_helper.should_receive(:set).with(domain, username, password, DoneDone::Constant.url_for('ISSUE', project_id, issue_order_number), options)
-      http_helper.should_receive(:put)
+      http_helper.should_receive(:put).with( DoneDone::Constant.url_for('ISSUE', project_id, issue_order_number), options)
 
       issue_tracker.update_issue(project_id, issue_order_number, options)
     end
